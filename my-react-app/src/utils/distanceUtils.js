@@ -1,0 +1,1 @@
+export const windKmh = (speed)=> (speed * 3.6).toFixed(2); // km/h
