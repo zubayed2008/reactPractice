@@ -3,16 +3,20 @@ import { TemperatureContext } from '../../component/temperatureContext/temperatu
 import { fetchWeather } from '../../service/weatherService/weatherService.js';
 import { formatTime } from '../../utils/timeUtils.js';
 import { windKmh } from '../../utils/distanceUtils.js';
+import { getCityFromLocation } from '../../service/geoLocation/geoLocatonService.js';
+import cityList from '../../assets/city_json/city.list.json';
+
 function Home() {
     const { temperatureType } = useContext(TemperatureContext);
     const [weather, setWeather] = useState(null);
     const [ temperatureSign , setTemperatureSign] = useState(null);
-    
+    const [city, setCity] = useState(() => localStorage.getItem("defaultCity") || "Dhaka");
+
     useEffect(() => {
     fetchWeather(temperatureType)
       .then(response => setWeather(response.data))
       .catch(error => console.error(error));
-    }, [temperatureType]);
+    }, [city,temperatureType]);
 
     useEffect(() => {
         if (temperatureType === 'celsius') {
@@ -23,6 +27,24 @@ function Home() {
             setTemperatureSign('K');
         }
     }, [temperatureType]);
+
+    const handleDetectAndSetCity = async () => {
+        const cityName = await getCityFromLocation();
+        if (cityName) {
+        // Find city object from your city list (import cityList if needed)
+        const cityObj = cityList.find(
+            c => c.name.toLowerCase() === cityName.toLowerCase()
+        );
+        if (cityObj) {
+            localStorage.setItem("defaultCity", cityObj.name);
+            localStorage.setItem("defaultCityId", cityObj.id);
+            setCity(cityObj.name);
+        } else {
+            localStorage.setItem("defaultCity", cityName);
+            setCity(cityName);
+        }
+        }
+    };
 
 
     return ( 
@@ -85,6 +107,13 @@ function Home() {
                     </div>
                 </div>
             </div>
+
+            <button
+                className="btn btn-info mb-3"
+                onClick={handleDetectAndSetCity}
+                >
+                Detect & Set My City as Default
+            </button>
 
             <div className='row'>
                 <div className='col-12'>
